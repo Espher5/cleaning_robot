@@ -1,0 +1,2 @@
+class CleaningRobotError(Exception):
+    pass
