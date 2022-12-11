@@ -3,16 +3,20 @@ from CleaningRobotError import CleaningRobotError
 
 
 class CleaningRobot:
-    INFRARED_PIN = 11
+    INFRARED_PIN =11
     BATTERY_PIN = 12
     RECHARGE_LED_PIN = 13
     CLEANING_SYSTEM_PIN = 15
 
     # Wheel motor pins
-    MOTOR_PWMA = 0
-    MOTOR_AIN2 = 0
-    MOTOR_AIN1 = 0
-    MOTOR_STBY = 0
+    PWMA = 16
+    AIN2 = 18
+    AIN1 = 22
+    # Rotation motor pins
+    BIN1 = 29
+    BIN2 = 31
+    PWMB = 32
+    STBY = 33
 
     N = 'N'
     S = 'S'
@@ -24,11 +28,6 @@ class CleaningRobot:
     FORWARD = 'f'
 
     def __init__(self, room_x: int, room_y: int):
-        """
-        Constructor
-        :param room_x: the x dimension of the room
-        :param room_y: the y dimension of the room
-        """
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
         GPIO.setup(self.INFRARED_PIN, GPIO.IN)
@@ -36,19 +35,43 @@ class CleaningRobot:
         GPIO.setup(self.RECHARGE_LED_PIN, GPIO.OUT)
         GPIO.setup(self.CLEANING_SYSTEM_PIN, GPIO.OUT)
 
-        GPIO.setup(self.MOTOR_PWMA, GPIO.OUT)
-        GPIO.setup(self.MOTOR_AIN2, GPIO.OUT)
-        GPIO.setup(self.MOTOR_AIN1, GPIO.OUT)
-        GPIO.setup(self.MOTOR_STBY, GPIO.OUT)
+        GPIO.setup(self.PWMA, GPIO.OUT)
+        GPIO.setup(self.AIN2, GPIO.OUT)
+        GPIO.setup(self.AIN1, GPIO.OUT)
+        GPIO.setup(self.PWMB, GPIO.OUT)
+        GPIO.setup(self.BIN2, GPIO.OUT)
+        GPIO.setup(self.BIN1, GPIO.OUT)
+        GPIO.setup(self.STBY, GPIO.OUT)
 
         self.room_x = room_x
         self.room_y = room_y
+        self.obstacles = []
         self.pos_x = None
         self.pos_y = None
         self.facing = None
 
-        self.cleaning_system_on = False
         self.battery_led_on = False
+        self.cleaning_system_on = False
+
+    def robot_status(self) -> str:
+        """
+        Returns the current status of the robot, as well as any obstacle encountered
+        :return: the status of the robot as a string
+        """
+        status_string = '(' + str(self.pos_x) + ',' + str(self.pos_y) + ',' + self.facing + ')'
+        if len(self.obstacles) > 0:
+            for ob in self.obstacles:
+                status_string += ob
+
+        return status_string
+
+    def add_obstacle(self, ob_x: int, ob_y: int) -> None:
+        """
+        Adds an obstacles to the list of encountered obstacles
+        :param ob_x: the x coordinate of the obstacle
+        :param ob_y: the y coordinate of the obstacle
+        """
+        self.obstacles.append('(' + str(ob_x) + ',' + str(ob_y) + ')')
 
     def initialize_robot(self) -> None:
         """
@@ -75,13 +98,6 @@ class CleaningRobot:
         """
         pass
 
-    def robot_status(self) -> str:
-        """
-
-        :return:
-        """
-        return '(' + str(self.pos_x) + ',' + str(self.pos_y) + ',' + self.facing + ')'
-
     def obstacle_found(self) -> bool:
         """
         Checks whether the infrared distance sensor detects an obstacle in front of it.
@@ -100,11 +116,49 @@ class CleaningRobot:
         """
         pass
 
-    def activate_wheel_motor(self):
+    def activate_wheel_motor(self) -> None:
+        """
+        Makes the robot move forward by activating its wheel motor
+        """
         # Drive the motor clockwise
-        GPIO.output(self.MOTOR_AIN1, GPIO.HIGH)
-        GPIO.output(self.MOTOR_AIN2, GPIO.LOW)
+        GPIO.output(self.AIN1, GPIO.HIGH)
+        GPIO.output(self.AIN2, GPIO.LOW)
         # Set the motor speed
-        GPIO.output(self.MOTOR_PWMA, GPIO.HIGH)
+        GPIO.output(self.PWMA, GPIO.HIGH)
         # Disable STBY
-        GPIO.output(self.MOTOR_STBY, GPIO.HIGH)
+        GPIO.output(self.STBY, GPIO.HIGH)
+
+        # Usually you would wait for the motor to actually move
+        # For the sake of testing keep this commented
+        # time.sleep(5)
+
+        # Stop the motor
+        GPIO.output(self.AIN1, GPIO.LOW)
+        GPIO.output(self.AIN2, GPIO.LOW)
+        GPIO.output(self.PWMA, GPIO.LOW)
+        GPIO.output(self.STBY, GPIO.LOW)
+
+    def activate_rotation_motor(self, direction) -> None:
+        """
+        Makes the body of the robot rotate in the direction corresponding to the received parameter
+        :param direction: "l" to turn left, "r" to turn right
+        """
+        if direction == self.LEFT:
+            GPIO.output(self.BIN1, GPIO.HIGH)
+            GPIO.output(self.BIN2, GPIO.LOW)
+        elif direction == self.RIGHT:
+            GPIO.output(self.BIN1, GPIO.LOW)
+            GPIO.output(self.BIN2, GPIO.HIGH)
+
+        GPIO.output(self.PWMB, GPIO.HIGH)
+        GPIO.output(self.STBY, GPIO.HIGH)
+
+        # Usually you would wait for the motor to actually move
+        # For the sake of testing keep this commented
+        # time.sleep(5)
+
+        # Stop the motor
+        GPIO.output(self.BIN1, GPIO.LOW)
+        GPIO.output(self.BIN2, GPIO.LOW)
+        GPIO.output(self.PWMB, GPIO.LOW)
+        GPIO.output(self.STBY, GPIO.LOW)
