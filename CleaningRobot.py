@@ -98,13 +98,10 @@ class CleaningRobot:
 
     def manage_battery(self) -> None:
         """
-        User story 2: When the robot is turned on, it first checks how much battery is left by querying the IBS.
-        If the capacity returned by the IBS is equal to or less than 10%, the robot turns on the recharging led.
-        Otherwise, the robot turns on the cleaning system and sends its status to the RMS.
-
-        User story 5: When the robot enters a cell, it checks how much battery is left by querying the IBS.
-        When the capacity returned by the IBS is equal to or less than 10%, the robot shuts down the cleaning system,
-        turns on the recharging led, and stands still.
+        It  checks how much battery is left by querying the IBS.
+        If the capacity returned by the IBS is equal to or less than 10%,
+        the robot turns on the recharging led and shuts off the cleaning system.
+        Otherwise, the robot turns on the cleaning system and turns off the recharge LED.
         """
         pass
 
